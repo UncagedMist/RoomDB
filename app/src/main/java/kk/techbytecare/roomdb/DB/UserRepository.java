@@ -53,4 +53,9 @@ public class UserRepository implements IUserDataSource {
     public void deleteAllUsers() {
         localDataSource.deleteAllUsers();
     }
+
+    @Override
+    public Flowable<List<User>> getUserList(String search) {
+        return localDataSource.getUserList(search);
+    }
 }

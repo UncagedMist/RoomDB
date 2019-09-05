@@ -20,4 +20,6 @@ public interface IUserDataSource {
 
     void deleteAllUsers();
 
+    Flowable<List<User>> getUserList(String search);
+
 }

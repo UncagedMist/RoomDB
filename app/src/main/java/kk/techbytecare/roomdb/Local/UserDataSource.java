@@ -54,4 +54,9 @@ public class UserDataSource implements IUserDataSource {
     public void deleteAllUsers() {
         userDAO.deleteAllUsers();
     }
+
+    @Override
+    public Flowable<List<User>> getUserList(String search) {
+        return userDAO.getUserList(search);
+    }
 }

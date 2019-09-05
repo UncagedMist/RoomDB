@@ -32,4 +32,7 @@ public interface UserDAO {
 
     @Query("DELETE FROM users")
     void deleteAllUsers();
+
+    @Query("SELECT * FROM users WHERE name LIKE :search")
+    Flowable<List<User>> getUserList(String search);
 }

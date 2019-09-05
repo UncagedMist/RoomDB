@@ -1,8 +1,10 @@
 package kk.techbytecare.roomdb;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -25,6 +27,7 @@ import java.util.List;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -38,6 +41,8 @@ import kk.techbytecare.roomdb.Model.User;
 
 public class MainActivity extends AppCompatActivity {
 
+
+    SearchView searchView;
     ListView lstUsers;
     FloatingActionButton fabAdd;
 
@@ -58,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         lstUsers = findViewById(R.id.lstUsers);
         fabAdd = findViewById(R.id.fabAdd);
 
-        adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1,userList);
+        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, userList);
         registerForContextMenu(lstUsers);
         lstUsers.setAdapter(adapter);
 
@@ -74,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 Disposable disposable = Observable.create(new ObservableOnSubscribe<Object>() {
                     @Override
                     public void subscribe(ObservableEmitter<Object> emitter) throws Exception {
-                        User user = new User("abac","a@gmail.com");
+                        User user = new User("kkkk", "a@gmail.com");
                         userList.add(user);
                         userRepository.insertUser(user);
                         emitter.onComplete();
@@ -85,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
                         .subscribe(new Consumer<Object>() {
                                        @Override
                                        public void accept(Object o) throws Exception {
-                                           Toast.makeText(MainActivity.this, "User Added", Toast.LENGTH_SHORT).show();
                                        }
                                    }, new Consumer<Throwable>() {
                                        @Override
@@ -118,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
-                        Toast.makeText(MainActivity.this, ""+throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "" + throwable.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
         compositeDisposable.add(disposable);
@@ -134,7 +138,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        getMenuInflater().inflate(R.menu.main_menu,menu);
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+
+        searchView = (SearchView) menu.findItem(R.id.menu_search)
+                .getActionView();
+
+        searchView.setSubmitButtonEnabled(false);
+        searchView.setOnQueryTextListener(onQueryTextListener);
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -142,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
-        switch (item.getItemId())   {
+        switch (item.getItemId()) {
 
             case R.id.menu_clear:
                 deleteAllUsers();
@@ -152,6 +162,23 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    private SearchView.OnQueryTextListener onQueryTextListener =
+            new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    getUserFromDB(query);
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    getUserFromDB(newText);
+                    return true;
+                }
+    };
+
+
 
     private void deleteAllUsers() {
 
@@ -185,6 +212,30 @@ public class MainActivity extends AppCompatActivity {
 
         compositeDisposable.add(disposable);
 
+    }
+
+    private void getUserFromDB(final String searchText) {
+
+        Disposable disposable = userRepository.getUserList(searchText.toLowerCase())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(new Consumer<List<User>>() {
+                    @Override
+                    public void accept(List<User> users) throws Exception {
+                        adapter = new ArrayAdapter(
+                                MainActivity.this,
+                                android.R.layout.simple_list_item_1, users);
+
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        Toast.makeText(MainActivity.this, "" + throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+
+                });
+        lstUsers.setAdapter(adapter);
+        compositeDisposable.add(disposable);
     }
 
     @Override
